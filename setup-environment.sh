@@ -32,4 +32,4 @@ aws iam attach-role-policy --role-name "${AWS_NODE_ROLE}" --policy-arn "${AWS_SE
 
 echo ""
 echo "5️⃣  Setting up friendly namespace names"
-humctl apply -f ./setup/friedndly-k8s-namespaces.yaml
+humctl apply -f ./setup/friendly-k8s-namespaces.yaml
