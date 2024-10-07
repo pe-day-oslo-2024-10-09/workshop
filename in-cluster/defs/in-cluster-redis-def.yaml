@@ -1,0 +1,110 @@
+apiVersion: entity.humanitec.io/v1b1
+kind: Definition
+metadata:
+  id: in-cluster-redis
+entity:
+  criteria:
+  - {}
+  driver_inputs:
+    values:
+      templates:
+        cookie: |
+          port: {{ .init.port }}
+          password: {{ .init.password }}
+        init: |-
+          {{- $password := randAlphaNum 16 | quote }}
+          {{- $port := 6379 }}
+          {{- if .cookie}}
+          {{- $password = .cookie.password }}
+          {{- $port = .cookie.port }}
+          {{- end }}
+          password: {{ $password | quote }}
+          port: {{ $port }}
+          id: redis-{{ .id }}
+          redis_conf: |
+            requirepass {{ $password }}
+            port {{ $port }}
+        
+        manifests: |
+          deployment.yaml:
+            location: namespace
+            data:
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: {{ .init.id }}
+              spec:
+                selector:
+                  matchLabels:
+                    app: {{ .init.id }}
+                template:
+                  metadata:
+                    labels:
+                      app: {{ .init.id }}
+                  spec:
+                    automountServiceAccountToken: false
+                    securityContext:
+                      fsGroup: 1000
+                      runAsGroup: 1000
+                      runAsNonRoot: true
+                      runAsUser: 1000
+                      seccompProfile:
+                        type: RuntimeDefault
+                    containers:
+                    - name: redis
+                      image: redis:7-alpine
+                      ports:
+                      - containerPort: {{ .init.port }}
+                      securityContext:
+                        allowPrivilegeEscalation: false
+                        capabilities:
+                          drop:
+                            - ALL
+                        privileged: false
+                        readOnlyRootFilesystem: true
+                      volumeMounts:
+                      - name: redis-conf
+                        mountPath: "/usr/local/etc/redis"
+                        readOnly: true
+                    volumes:
+                    - name: redis-conf
+                      secret:
+                        secretName: {{ .init.id }}
+                        items:
+                        - key: redis-conf
+                          path: redis.conf
+
+          service.yaml:
+            location: namespace
+            data:
+              apiVersion: v1
+              kind: Service
+              metadata:
+                name: {{ .init.id }}
+              spec:
+                type: ClusterIP
+                selector:
+                  app: {{ .init.id }}
+                ports:
+                - name: tcp-redis
+                  port: {{ .init.port }}
+                  targetPort: {{ .init.port }}
+          secrets.yaml:
+            location: namespace
+            data:
+              apiVersion: v1
+              kind: Secret
+              metadata:
+                name: {{ .init.id }}
+              data:
+                redis-conf: {{ .init.redis_conf | b64enc }}
+                  
+        outputs: |
+          host: {{ .init.id | quote }}
+          port: {{ .init.port }}
+        secrets: |
+          username: ""
+          password: {{ .init.password | quote }}
+  driver_type: humanitec/template
+  name: redis-in-cluster
+  type: redis

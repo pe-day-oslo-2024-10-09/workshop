@@ -6,15 +6,17 @@ This workshop is part of the _Platform Engineering with AWS + DNB + Humanitec: D
 
 In this workshop we will set up a Minimal Viable Platform in 2 hours. AWS has very kindly provided Lab environments for us to work in, so let's get started.
 
-## Prerequisites
+## 00 - Prerequisites
 
 - Claim your Humanitec Organization. You should have got an email with an invite link.
 
-- Get access to your AWS Lab environments [details here](https://snapshots.eksworkshop.com/1335da97/docs/introduction/setup/aws-event)
+- Claim your AWS Lab environment. Details will be shared during the event.
+
+- Details about EKS Workshop and AWS Lab environments [details here](https://snapshots.eksworkshop.com/1335da97/docs/introduction/setup/aws-event)
 
 - Clone this repository into the home directory of your Lab Environment:
   ```
-  git clone git@github.com:pe-day-oslo-2024-10-09/workshop.git
+  git clone https://github.com/pe-day-oslo-2024-10-09/workshop.git
   ```
 
 - Install the Humanitec and other tools we will be using:
@@ -40,9 +42,9 @@ In this workshop we will set up a Minimal Viable Platform in 2 hours. AWS has ve
   ```
 
 > [!NOTE]
-> This is all the setup done! Now we can get o with the workshop. We will run things through step buy step so you can follow along easily!
+> Setup is done! Now we can get on with the workshop. We will run things through step-by-step so you can follow along easily.
 
-## Connecting the EKS cluster to Humanitec
+## 01 - Connecting the EKS cluster to Humanitec
 
 To do this, we will use the Humanitec Setup Wizard. It will ask you a series of questions and then configure access and register the EKS cluster with the Platform Orchestrator.
 
@@ -51,7 +53,8 @@ To do this, we will use the Humanitec Setup Wizard. It will ask you a series of 
    humanitec-setup-wizard connect
    ```
 
-   It will ask you questions, in most cases you can select the default answer. Here is an example run through:
+> [!IMPORTANT]
+> The wizard will ask you questions, in most *but not all* cases you can select the default answer. Here is an example run through:
 
    <pre>
    
@@ -77,6 +80,14 @@ To do this, we will use the Humanitec Setup Wizard. It will ask you a series of 
    
    ? Please enter the id for the secret store you would like to create in your Humanitec Organization <b>my-secret-store</b>
    
+   ? Please enter the id of the namespace where the runner will run. The wizard will create it if it does not exist. <b>humanitec-terraform</b>
+   
+   ? Please enter the name of the k8s service account the wizard will create to let the runner run with <b>humanitec-tf-runner</b>
+   
+   ? Please enter the id of the config resource definition that will be created to inject Terraform runner credentials <b>my-tf-runner-config</b>
+   
+   ? Please enter the id of the terraform-runner driver resource definition that will be created to provision a fake s3 bucket (my-vd-tf-fake-s3) 
+   
    ? Do you want to deploy a test application? <b>Yes</b>
    
    ? Please enter the id for the application you would like to create in your Humanitec Organization <b>my-application</b>
@@ -84,10 +95,12 @@ To do this, we will use the Humanitec Setup Wizard. It will ask you a series of 
 
    After a few seconds, the application should be running in the cluster. You can go to the Humanitec Portal to view it: [app.humanitec.io](https://app.humanitec.io)
 
+## 02 - Deploy the first workload
 
-## Deploy the first application
+Let's start with our Score-based workload. This will deploy a workload running [stefanprodan/podinfo](https://github.com/stefanprodan/podinfo) exposed with a DNS name.
 
-Let's start with our score based workload. This will deploy a workload running [stefanprodan/podinfo](https://github.com/stefanprodan/podinfo) exposed with a DNS name.
+> [!INFO]
+> Score is a platform-agnostic workload specification. It’s a Cloud Native Computing Foundation (CNCF) project. Learn more at [score.dev](https://score.dev).
 
 ### Steps
 
@@ -96,12 +109,12 @@ Let's start with our score based workload. This will deploy a workload running [
    cd first-score
    ```
 
-2. Review the score file:
+2. Review the Score file:
    ```
    cat score.yaml | yq
    ```
-   > [!TIP]
-   > `yq` will give you nice syntax highlighted output of YAML files and will also validate your YAML is correct. See [yq Docs](https://mikefarah.gitbook.io/yq).
+> [!TIP]
+> `yq` will give you nice syntax highlighted output of YAML files and will also validate your YAML is correct. See [yq Docs](https://mikefarah.gitbook.io/yq).
 
 3. Create a new application to deploy out workload in:
    ```
@@ -110,7 +123,64 @@ Let's start with our score based workload. This will deploy a workload running [
 
 4. Deploy the workload into the app:
    ```
-   humctl score deploy -f score.yaml --app first-deploy --env development --wait
+   humctl score deploy -f score.yaml --app first-score --env development --wait
    ```
 
-5. Go to the Humanitec Portal to view the deployment.
+5. Go to the [Humanitec Portal](https://app.humanitec.io) to view the deployment.
+
+## 03 - Add CI for Preview Environments
+
+Deploying using `humctl score deploy` is all very well, but a better developer experience is to do this automatically when we `git push`.
+
+### Steps
+
+1. Get your AWS account to trust your GitHub user. Replace `<GITHUB_NAME>` with your github username.
+   ```
+   cd ../use-ci
+   sh trust-github-actions.sh <GITHUB_NAME>
+   ```
+   Save the `Role ARN` that is returned by the script. You will need it later.
+
+2. Create a new app
+   ```
+   humctl create app jokes
+   ```
+
+3. Generate a service user token for the CI.
+   1. Go to the [Humanitec Portal](https://app.humanitec.io)
+   2. Select _Service Users_ from the left hand menu
+   3. Click `+ Create new service user`
+   4. Choose a name, select "Administrator" for the role and click `Create new service user`
+   5. Expand the new service user and click `+ Add new API token`
+   6. Choose a name for the token and click `Create new API token`
+   7. Copy the `API token` somewhere safe - you will need it later.
+
+4. Create the GitHub Repository with the CI
+   1. Go to [github.com/pe-day-oslo-2024-10-09/tell-a-joke](https://github.com/pe-day-oslo-2024-10-09/tell-a-joke)
+   2. Click the green `Use this template` button in the top right.
+   3. Choose a location to create it. (Recommendation: use your own GitHub.)
+
+5. Configure GitHub Actions
+
+   This involves setting some variables and secrets in GitHub Actions. To find the Secrets and Variables, follow the numbers in this image in your new repository.
+   ![Setting values and secrets in GitHub](./img/setting-values-secrets-github-actions.png)
+
+   Create the following  _Repository Secret_:
+   -  `HUMANITEC_TOKEN` with value of the `API token` (from step 3)
+
+   Create the following create 3 `Variable` values:
+   - `HUMANITEC_APP` with the value `jokes`
+   - `HUMANITEC_ORG` with your Humanitec Organization ID (e.g.: `pe-day-oslo-…`).
+   - `AWS_ROLE_ARN` with the `Role ARN` (from step 1)
+
+> [!TIP]
+> You can find your Organization ID with `humctl config org`
+
+6. Test GitHub Actions
+
+   In the repository page in GitHub:
+   1. Select the _Actions_ tab
+   2. Open the failed CI job
+   3. Click _Re-run Jobs_
+   4. Wait - after a while it should succeed!
+   5. View the `jokes` application in the [Humanitec Portal](https://app.humanitec.io).

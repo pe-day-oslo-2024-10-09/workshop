@@ -1,0 +1,114 @@
+apiVersion: entity.humanitec.io/v1b1
+kind: Definition
+metadata:
+  id: in-cluster-postgres
+entity:
+  criteria:
+  - {}
+  driver_inputs:
+    values:
+      templates:
+        cookie: |
+          port: {{ .init.port }}
+          user: {{ .init.user }}
+          password: {{ .init.password }}
+          database: {{ .init.database }}
+        init: |-
+          {{- if .cookie}}
+          port: {{ .cookie.port }}
+          user: {{ .cookie.user }}
+          password: {{ .cookie.password }}
+          database: {{ .cookie.database }}
+          {{- else }}
+          port: 5432
+          user: {{ randAlpha 8 | lower | quote }}
+          password: {{ randAlphaNum 16 | quote }}
+          database: {{ randAlpha 8 | lower | quote }}
+          {{- end }}
+          name: postgres-{{ .id }}
+        
+        manifests: |
+          statefulset.yaml:
+            location: namespace
+            data:
+              apiVersion: apps/v1
+              kind: StatefulSet
+              metadata:
+                name: {{ .init.name }}
+              spec:
+                serviceName: postgres
+                replicas: 1
+                selector:
+                  matchLabels:
+                    app: {{ .init.name }}
+                template:
+                  metadata:
+                    labels:
+                      app: {{ .init.name }}
+                  spec:
+                    containers:
+                      - name: {{ .init.name }}
+                        image: postgres:15
+                        env:
+                          - name: POSTGRES_USER
+                            value: {{ .init.user | quote }}
+                          - name: POSTGRES_PASSWORD
+                            valueFrom:
+                              secretKeyRef:
+                                name: {{ .init.name }}
+                                key: POSTGRES_PASSWORD
+                          - name: POSTGRES_DB
+                            value: {{ .init.database | quote }}
+                          - name: PGDATA
+                            value: /var/lib/postgresql/data/pgdata
+                          - name: PGPORT
+                            value: {{ .init.port | quote }}
+                        ports:
+                          - containerPort: {{ .init.port }}
+                            name: postgres
+                        volumeMounts:
+                          - name: {{ .init.name }}
+                            mountPath: /var/lib/postgresql/data
+                volumeClaimTemplates:
+                  - metadata:
+                      name: {{ .init.name }}
+                    spec:
+                      accessModes:
+                        - ReadWriteOnce
+                      resources:
+                        requests:
+                          storage: 10Gi
+          service.yaml:
+            location: namespace
+            data:
+              apiVersion: v1
+              kind: Service
+              metadata:
+                name: {{ .init.name }}
+              spec:
+                ports:
+                - port: {{ .init.port }}
+                selector:
+                  app: {{ .init.name }}
+                clusterIP: None
+          secret.yaml:
+            location: namespace
+            data:
+              apiVersion: v1
+              kind: Secret
+              metadata:
+                name: {{ .init.name }}
+              type: Opaque
+              data:
+                POSTGRES_PASSWORD: {{ .init.password | b64enc }}
+                  
+        outputs: |
+          host: {{ .init.id | quote }}
+          port: {{ .init.port }}
+          name: {{ .database }}
+        secrets: |
+          username: {{ .init.user }}
+          password: {{ .init.password }}
+  driver_type: humanitec/template
+  name: postgres-in-cluster
+  type: postgres
