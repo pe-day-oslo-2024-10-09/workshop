@@ -10,7 +10,9 @@ In this workshop we will set up a Minimal Viable Platform in 2 hours. AWS has ve
 
 - Claim your Humanitec Organization. You should have got an email with an invite link.
 
-- Get access to your AWS Lab environments [details here](https://snapshots.eksworkshop.com/1335da97/docs/introduction/setup/aws-event)
+- Claim your AWS Lab environment. Details will be shared during the event. 
+
+- Details about EKS Workshop and AWS Lab environments [details here](https://snapshots.eksworkshop.com/1335da97/docs/introduction/setup/aws-event)
 
 - Clone this repository into the home directory of your Lab Environment:
   ```
