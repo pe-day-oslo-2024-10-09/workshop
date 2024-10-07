@@ -112,7 +112,7 @@ Let's start with our score based workload. This will deploy a workload running [
 
 4. Deploy the workload into the app:
    ```
-   humctl score deploy -f score.yaml --app first-deploy --env development --wait
+   humctl score deploy -f score.yaml --app first-score --env development --wait
    ```
 
 5. Go to the Humanitec Portal to view the deployment.
