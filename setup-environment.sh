@@ -12,7 +12,7 @@ fi
 echo "    Org: $PE_DAY_ORG"
 humctl config set org $PE_DAY_ORG
 
-echo "Confoguring kubectl context"
+echo "Configuring kubectl context"
 aws eks update-kubeconfig --region us-west-2 --name eks-workshop
 
 echo "Installing ingress-nginx into the cluster"
