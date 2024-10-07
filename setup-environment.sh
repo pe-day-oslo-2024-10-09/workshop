@@ -12,14 +12,17 @@ fi
 echo "    Org: $PE_DAY_ORG"
 humctl config set org $PE_DAY_ORG
 
-echo "\n2️⃣  Configuring kubectl context"
+echo ""
+echo "2️⃣  Configuring kubectl context"
 aws eks update-kubeconfig --region us-west-2 --name eks-workshop
 
-echo "\n3️⃣  Installing ingress-nginx into the cluster"
+echo ""
+echo "3️⃣  Installing ingress-nginx into the cluster"
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.2/deploy/static/provider/aws/deploy.yaml
 
 
-echo "\n4️⃣  Configuring IAM for SecretManager access"
+echo ""
+echo "4️⃣  Configuring IAM for SecretManager access"
 AWS_NODE_ROLE="$(aws iam list-roles | jq -r '.Roles[] | select(.RoleName | startswith("eksctl-eks-workshop-nodegroup-defa-NodeInstanceRole")) | .RoleName')"
 echo "    Role:  $AWS_NODE_ROLE"
 AWS_SECRET_MANAGER_POLICY="$(aws iam list-policies | jq -r '.Policies[] | select(.PolicyName | startswith("SecretsManagerReadWrite")) | .Arn')"
@@ -27,5 +30,6 @@ echo "    Policy: $AWS_SECRET_MANAGER_POLICY"
 
 aws iam attach-role-policy --role-name "${AWS_NODE_ROLE}" --policy-arn "${AWS_SECRET_MANAGER_POLICY}"
 
-echo "\n5️⃣  Setting up friendly namespace names"
+echo ""
+echo "5️⃣  Setting up friendly namespace names"
 humctl apply -f ./setup/friedndly-k8s-namespaces.yaml
