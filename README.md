@@ -10,7 +10,7 @@ In this workshop we will set up a Minimal Viable Platform in 2 hours. AWS has ve
 
 - Claim your Humanitec Organization. You should have got an email with an invite link.
 
-- Claim your AWS Lab environment. Details will be shared during the event. 
+- Claim your AWS Lab environment. Details will be shared during the event.
 
 - Details about EKS Workshop and AWS Lab environments [details here](https://snapshots.eksworkshop.com/1335da97/docs/introduction/setup/aws-event)
 
@@ -42,7 +42,7 @@ In this workshop we will set up a Minimal Viable Platform in 2 hours. AWS has ve
   ```
 
 > [!NOTE]
-> This is all the setup done! Now we can get o with the workshop. We will run things through step buy step so you can follow along easily!
+> This is all the setup done! Now we can get on with the workshop. We will run things through step-by-step so you can follow along easily!
 
 ## Connecting the EKS cluster to Humanitec
 
@@ -53,7 +53,8 @@ To do this, we will use the Humanitec Setup Wizard. It will ask you a series of 
    humanitec-setup-wizard connect
    ```
 
-   It will ask you questions, in most cases you can select the default answer. Here is an example run through:
+> [!IMPORTANT]
+> The wizard will ask you questions, in most *but not all* cases you can select the default answer. Here is an example run through:
 
    <pre>
    
@@ -102,8 +103,8 @@ Let's start with our score based workload. This will deploy a workload running [
    ```
    cat score.yaml | yq
    ```
-   > [!TIP]
-   > `yq` will give you nice syntax highlighted output of YAML files and will also validate your YAML is correct. See [yq Docs](https://mikefarah.gitbook.io/yq).
+> [!TIP]
+> `yq` will give you nice syntax highlighted output of YAML files and will also validate your YAML is correct. See [yq Docs](https://mikefarah.gitbook.io/yq).
 
 3. Create a new application to deploy out workload in:
    ```
@@ -115,4 +116,4 @@ Let's start with our score based workload. This will deploy a workload running [
    humctl score deploy -f score.yaml --app first-score --env development --wait
    ```
 
-5. Go to the Humanitec Portal to view the deployment.
+5. Go to the [Humanitec Portal](https://app.humanitec.io) to view the deployment.
