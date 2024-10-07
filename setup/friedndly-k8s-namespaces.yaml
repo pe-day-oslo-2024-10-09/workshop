@@ -1,0 +1,24 @@
+apiVersion: entity.humanitec.io/v1b1
+kind: Definition
+metadata:
+  id: friendly-k8s-namespaces
+entity:
+  criteria:
+  - {}
+  driver_inputs:
+    values:
+      name: ${context.app.id}-${context.env.id}
+      templates:
+        cookie: |
+          namespace: {{ .init.namespace }}
+        init: |
+          {{- if and .cookie .cookie.namespace }}
+          namespace: {{ .cookie.namespace }}
+          {{- else }}
+          namespace:  {{ .driver.values.name | trunc 58 }}-{{ randAlphaNum 4 | lower }}
+          {{- end }}
+        outputs: |
+          namespace: {{ .init.namespace }}
+  driver_type: humanitec/template
+  name: friendly-k8s-namespaces
+  type: k8s-namespace

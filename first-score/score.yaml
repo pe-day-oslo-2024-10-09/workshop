@@ -1,0 +1,23 @@
+apiVersion: score.dev/v1b1
+metadata:
+  name: podinfo
+
+containers:
+  main:
+    image: ghcr.io/stefanprodan/podinfo:6.7.0
+
+service:
+  ports:
+    http:
+      port: 9898
+      targetPort: 9898
+
+resources:
+  podinfo-dns:
+    type: dns
+  podinfo-route:
+    type: route
+    params:
+      host: ${resources.podinfo-dns.host}
+      path: /
+      port: 9898
