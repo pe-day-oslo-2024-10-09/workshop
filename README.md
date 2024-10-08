@@ -80,6 +80,12 @@ To do this, we will use the Humanitec Setup Wizard. It will ask you a series of 
    
    ? Please enter the id for the secret store you would like to create in your Humanitec Organization <b>my-secret-store</b>
    
+   ? Please enter the id of the namespace where the runner will run. The wizard will create it if it does not exist. <b>humanitec-terraform</b>
+   
+   ? Please enter the name of the k8s service account the wizard will create to let the runner run with <b>humanitec-tf-runner</b>
+   
+   ? Please enter the id of the config resource definition that will be created to inject Terraform runner credentials <b>my-tf-runner-config</b>
+   
    ? Do you want to deploy a test application? <b>Yes</b>
    
    ? Please enter the id for the application you would like to create in your Humanitec Organization <b>my-application</b>
